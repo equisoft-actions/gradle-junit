@@ -15,6 +15,12 @@ inputs:
       Defaults to the root project.
     required: true
     default: "."
+  gradle-dependencies-cache-key:
+    description: Extra files to take into account for ~/.gradle/caches dependencies
+    required: true
+    default: |
+      buildSrc/**/Dependencies.kt
+      gradle/libs.versions.toml
   report-retention-days:
     description: Duration in days to preserve reports.
     required: true
@@ -40,12 +46,11 @@ runs:
   using: composite
   steps:
     - name: Run tests
-      uses: burrunan/gradle-cache-action@v1.10
+      uses: burrunan/gradle-cache-action@v1
       with:
         gradle-version: wrapper
         build-root-directory: ${{ inputs.working-directory }}
-        gradle-dependencies-cache-key: |
-          buildSrc/**/Dependencies.kt
+        gradle-dependencies-cache-key: ${{ inputs.gradle-dependencies-cache-key }}
         arguments: -p ${{ inputs.gradle-project-path }} ci-${{ inputs.task-name }}
         properties: ${{ inputs.gradle-properties }}
 
