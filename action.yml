@@ -49,10 +49,12 @@ runs:
       id: metadata
       shell: bash
       run: |
-        ARTIFACT_PATH=${{ inputs.working-directory }}
+        WORKING_DIRECTORY=${{ inputs.working-directory }}
         GRADLE_PROJECT_PATH=${{  inputs.gradle-project-path }}
-        if [[ "$GRADLE_PROJECT_PATH" != "." ]]; then
-          ARTIFACT_PATH="$ARTIFACT_PATH/$GRADLE_PROJECT_PATH"
+        if [[ "$GRADLE_PROJECT_PATH" == "." ]]; then
+          ARTIFACT_PATH="$WORKING_DIRECTORY/**"
+        else
+          ARTIFACT_PATH="$WORKING_DIRECTORY/$GRADLE_PROJECT_PATH"
         fi
         echo "artifact-path=$ARTIFACT_PATH" >> $GITHUB_OUTPUT
 
