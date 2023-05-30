@@ -6,6 +6,14 @@ description: |
   This actions will also annotate the PR or commit with the failed tests.
 
 inputs:
+  execution-only-caches:
+    description: |
+      Activates only the caches that are relevant for executing gradle command.
+      This is helpful when build job executes multiple gradle commands sequentially.
+      Then the caching is implemented in the very first one, and the subsequent should be marked
+      with execution-only-caches: true
+    required: false
+    default: 'false'
   gradle-properties:
     description: Content of a gradle.properties file that will be passed to the gradle runner.
     required: false
@@ -45,6 +53,19 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: metadata
+      id: metadata
+      shell: bash
+      run: |
+        WORKING_DIRECTORY=${{ inputs.working-directory }}
+        GRADLE_PROJECT_PATH=${{  inputs.gradle-project-path }}
+        if [[ "$GRADLE_PROJECT_PATH" == "." ]]; then
+          ARTIFACT_PATH="$WORKING_DIRECTORY/**"
+        else
+          ARTIFACT_PATH="$WORKING_DIRECTORY/$GRADLE_PROJECT_PATH"
+        fi
+        echo "artifact-path=$ARTIFACT_PATH" >> $GITHUB_OUTPUT
+
     - name: Run tests
       uses: burrunan/gradle-cache-action@v1
       with:
@@ -53,6 +74,7 @@ runs:
         gradle-dependencies-cache-key: ${{ inputs.gradle-dependencies-cache-key }}
         arguments: -p ${{ inputs.gradle-project-path }} ci-${{ inputs.task-name }}
         properties: ${{ inputs.gradle-properties }}
+        execution-only-caches: ${{ inputs.execution-only-caches }}
 
     - name: Upload report
       uses: actions/upload-artifact@v3
@@ -61,7 +83,7 @@ runs:
         name: ${{ inputs.task-name }}-report
         retention-days: ${{ inputs.report-retention-days }}
         path: |
-          ${{ inputs.working-directory }}/${{ inputs.gradle-project-path }}/build/reports/tests/${{ inputs.task-name }}/
+          ${{ steps.metadata.outputs.artifact-path }}/build/reports/tests/${{ inputs.task-name }}/
 
     - name: Upload results
       uses: actions/upload-artifact@v3
@@ -71,8 +93,8 @@ runs:
         retention-days: 1
         if-no-files-found: error
         path: |
-          ${{ inputs.working-directory }}/${{ inputs.gradle-project-path }}/build/test-results/${{ inputs.task-name }}/
-          !${{ inputs.working-directory }}/${{ inputs.gradle-project-path }}/build/test-results/${{ inputs.task-name }}/binary
+          ${{ steps.metadata.outputs.artifact-path }}/build/test-results/${{ inputs.task-name }}/
+          !${{ steps.metadata.outputs.artifact-path }}/build/test-results/${{ inputs.task-name }}/binary
 
     - name: Upload coverage results
       uses: actions/upload-artifact@v3
@@ -82,7 +104,7 @@ runs:
         retention-days: 1
         if-no-files-found: error
         path: |
-          ${{ inputs.working-directory }}/${{ inputs.gradle-project-path }}/build/jacoco/${{ inputs.task-name }}.exec
+          ${{ steps.metadata.outputs.artifact-path }}/build/jacoco/${{ inputs.task-name }}.exec
 
     - name: Create annotations
       uses: mikepenz/action-junit-report@v3
@@ -90,4 +112,4 @@ runs:
       with:
         check_name: ${{ inputs.task-name }} report
         report_paths: |
-          ${{ inputs.working-directory }}/${{ inputs.gradle-project-path }}/build/test-results/${{ inputs.task-name }}/TEST-*.xml
+          ${{ steps.metadata.outputs.artifact-path }}/build/test-results/${{ inputs.task-name }}/TEST-*.xml
