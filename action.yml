@@ -84,7 +84,7 @@ runs:
           ${{ steps.gradle-properties.outputs.gradle-properties }}
 
     - name: Upload report
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v3
       if: "!cancelled()"
       with:
         name: ${{ inputs.task-name }}-report
@@ -93,7 +93,7 @@ runs:
           ${{ steps.metadata.outputs.artifact-path }}/build/reports/tests/${{ inputs.task-name }}/
 
     - name: Upload results
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v3
       if: "!cancelled()"
       with:
         name: ${{ inputs.task-name }}-results
@@ -104,7 +104,7 @@ runs:
           !${{ steps.metadata.outputs.artifact-path }}/build/test-results/${{ inputs.task-name }}/binary
 
     - name: Upload coverage results
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v3
       if: "!cancelled()"
       with:
         name: jacoco-build
