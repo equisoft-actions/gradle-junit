@@ -114,7 +114,7 @@ runs:
           ${{ steps.metadata.outputs.artifact-path }}/build/jacoco/${{ inputs.task-name }}.exec
 
     - name: Create annotations
-      uses: mikepenz/action-junit-report@v5
+      uses: mikepenz/action-junit-report@v6
       if: "!cancelled() && github.actor != 'dependabot[bot]'"
       with:
         check_name: ${{ inputs.task-name }} report
